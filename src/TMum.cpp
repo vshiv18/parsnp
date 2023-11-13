@@ -3,6 +3,9 @@
 #include "TMum.hh"
 #include "csgmum/types.h"
 #include <iostream>
+#include <numeric>
+#include <string>
+
 long TMum::counter = 1;
 
 TMum::TMum()
@@ -14,7 +17,7 @@ TMum::TMum( vector<long>& start, long length, vector<int>& forward, vector<strin
   :length(length)
 
 {
-  
+
   //need to convert (r-startpos)-length=startpos
   //                endpos = length+startpos
   //                ---->     <----
@@ -147,6 +150,41 @@ void TMum::trimright( void)
   this->slength -=1;
 }
 
+void TMum::serialize(FILE* outfile) const {
+        // Write each field to the output stream
+        fprintf(outfile,"%d\t", this->id);
+        fprintf(outfile,"%d\t", this->length);
+        // Write start positions
+        std::string start_string = std::accumulate(this->start.begin(), this->start.end(), std::string(),
+        [](const std::string& a, int b) -> std::string {
+            return a + (a.length() > 0 ? "," : "") + std::to_string(b);;
+        });
+        fprintf(outfile, (start_string + "\t").c_str());
+        // for (const auto& startPos : this->start) {
+        //   fprintf(outfile,"%d,", startPos);
+        // }
+
+        // Write end positions
+        std::string end_string = std::accumulate(this->end.begin(), this->end.end(), std::string(),
+        [](const std::string& a, int b) -> std::string {
+            return a + (a.length() > 0 ? "," : "") + std::to_string(b);
+        });
+        fprintf(outfile, (end_string + "\t").c_str());
+        // for (const auto& endPos : end) {
+        //     outfile << endPos << " ";
+        // }
+
+        // Write isforward flags
+        std::string strand_string = std::accumulate(this->isforward.begin(), this->isforward.end(), std::string(),
+        [](const std::string& a, bool b) -> std::string {
+            return a + (a.length() > 0 ? "," : "") + (b ? "+" : "-");
+        });
+        fprintf(outfile, strand_string.c_str());
+        // for (const auto& forwardFlag : isforward) {
+        //     outfile << (forwardFlag ? "true" : "false") << " ";
+        // }
+        fprintf(outfile, "\n");
+    }
 
 int operator<( const TMum &m1, const TMum &m2)
 {

@@ -54,7 +54,7 @@
 #include "parsnp.hh"
 #include "ext/iniFile.h"
 #include "Converter.h"
-#include "MuscleInterface.h"
+// #include "MuscleInterface.h"
 
 #include <cstring>
 #include <cmath>
@@ -850,8 +850,8 @@ void Aligner::writeOutput(string psnp,vector<float>& coveragerow)
                                 {
                                     
                                     bool align_success = false;
-                                    MuscleInterface gmi = MuscleInterface();
-                                    align_success = gmi.CallMuscleFast(alignment_result,seq2aln);
+                                    // MuscleInterface gmi = MuscleInterface();
+                                    // align_success = gmi.CallMuscleFast(alignment_result,seq2aln);
                                     
                                 }
                             }
@@ -1749,7 +1749,7 @@ void Aligner::setMums1(TRegion r1, vector<TMum>& mums, bool anchors = true, bool
                     if ( !ok || mum.length < 5)
                         continue;
 
-                    trim(mum);
+                    // trim(mum);
 
                     if ( mum.length < 2 || mum.start.size() <= 1)
                     {
@@ -3201,6 +3201,19 @@ int main ( int argc, char* argv[] )
     printf("        Finished recursive MUM search, elapsed time: %.0lf seconds\n\n", dif );
     align.coarsenTime = dif;
     
+    // Edit to extract MUMs
+    // VSS 11/9/23
+    string mum_output = outdir + "/mums.txt";
+    FILE* mum_outfile = fopen(mum_output.c_str(), "w");
+    // ofstream mum_outfile ( mum_output.c_str());
+    // mum_outfile << "this is a test of the emergency broadcast system" << endl;
+    // mum_outfile << setw(2) <<"Number of MUM anchors found:   "<< setw(2) << align.mums.size() << endl;
+    fprintf(mum_outfile, "id\tlength\tstart_pos\tend_pos\tstrand\n");
+    for (const auto& mum : align.mums) {
+             mum.serialize(mum_outfile);
+        }
+    // align.mums.front().serialize(mum_outfile);
+    exit(0);
     if ( random && ! mumfile.size() )
     {
         cerr << "Filtering spurious matches..." << endl;

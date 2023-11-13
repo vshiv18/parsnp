@@ -48,7 +48,6 @@ class Aligner
     vector<char *> clustalp;
     vector<long> startpos;
     vector<Cluster> clusters;
-    vector<TMum> mums;
     vector<TMum> rndmums;
     vector<Cluster> rndclusters;
     vector<TMum> anchors;
@@ -71,6 +70,7 @@ public:
     vector<string> files;
     vector<string> fasta;
     vector<string> headers;
+    vector<TMum> mums;
     bool shustring;
     float anchorTime,coarsenTime,randomTime,clustersTime,iclustersTime;
     int random;
