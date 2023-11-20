@@ -1749,7 +1749,10 @@ void Aligner::setMums1(TRegion r1, vector<TMum>& mums, bool anchors = true, bool
                     if ( !ok || mum.length < 5)
                         continue;
 
-                    // trim(mum);
+                    if (this->doUnalign) // this means trimming, not doUnalign. Parasitized the arg for simplicity.
+                    {
+                    trim(mum);
+                    }
 
                     if ( mum.length < 2 || mum.start.size() <= 1)
                     {

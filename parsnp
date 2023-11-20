@@ -400,7 +400,7 @@ def parse_args():
         "-u",
         "--unaligned",
         action = "store_true",
-        help = "Output unaligned regions")
+        help = "**Parasitized argument**. Now it is a flag for trimming MUMs. By default off, no MUM trimming. Setting flag -u will trim MUMs.")
 
     recombination_args = parser.add_argument_group("Recombination filtration")
     #TODO -x was a duplicate flag but no longer parsed as filter-phipack-snps in the current parsnp version
@@ -1080,7 +1080,7 @@ if __name__ == "__main__":
     # 3) Create output dir
     create_output_directory(outputDir)
 
-    # 4) Process all input files:
+    # 4) Process all input files:z
     #   -- 'input_files' here is args.sequences
     input_files = process_input_files(args, input_files)
 
@@ -1398,7 +1398,8 @@ SETTINGS:
                 successful_run = False
                 runcnt += 1
                 if runcnt >= 2:
-                    logger.critical("Set of recruited genomes are too divergent for parsnp, please reduce MUMi (%f) and relaunch\n"%(float(mumidistance)))
+                    # logger.critical("Set of recruited genomes are too divergent for parsnp, please reduce MUMi (%f) and relaunch\n"%(float(mumidistance)))
+                    logger.info("MUMs output in mums.txt")
                     sys.exit(1)
             else:
                 successful_run = True
