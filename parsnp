@@ -1369,7 +1369,7 @@ SETTINGS:
         write_inifile_2(inifiled, outputDir, unaligned, args, auto_ref, query, finalfiles, ref)
 
     #3)run parsnp (cores, grid?)
-    logger.info("Running Parsnp multi-MUM search and libMUSCLE aligner...")
+    logger.info("Running Parsnp multi-MUM search...")
     blocks_dir = os.path.join(outputDir, "blocks")
     if not os.path.exists(blocks_dir):
         os.mkdir(blocks_dir)
@@ -1393,14 +1393,14 @@ SETTINGS:
                     sys.exit(1)
                 command = "%s/bin/parsnp_core %s"%(PARSNP_DIR,inifile)
             run_command(command)
-
+            logger.info("MUMs output in mums.txt")
+            sys.exit(1)
             if not os.path.exists(os.path.join(outputDir, "parsnpAligner.xmfa")):
                 successful_run = False
                 runcnt += 1
                 if runcnt >= 2:
                     # logger.critical("Set of recruited genomes are too divergent for parsnp, please reduce MUMi (%f) and relaunch\n"%(float(mumidistance)))
-                    logger.info("MUMs output in mums.txt")
-                    sys.exit(1)
+                    
             else:
                 successful_run = True
                 runcnt += 1
