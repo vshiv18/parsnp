@@ -1399,7 +1399,7 @@ SETTINGS:
                 successful_run = False
                 runcnt += 1
                 if runcnt >= 2:
-                    # logger.critical("Set of recruited genomes are too divergent for parsnp, please reduce MUMi (%f) and relaunch\n"%(float(mumidistance)))
+                    logger.critical("Set of recruited genomes are too divergent for parsnp, please reduce MUMi (%f) and relaunch\n"%(float(mumidistance)))
                     
             else:
                 successful_run = True
