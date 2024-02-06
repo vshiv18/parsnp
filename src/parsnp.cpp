@@ -2465,7 +2465,6 @@ bool Aligner::setInterClusterRegions( void )
 void Aligner::setFinalClusters(string mumFileName)
 {
     vector<TMum> mums;
-    vector<string> rawmums;
     vector<long> startpos;
     long mumlength;
     char header[80];
@@ -2478,10 +2477,10 @@ void Aligner::setFinalClusters(string mumFileName)
     is.seekg (0, ios::beg);
 
     // allocate memory:
-    buffer = new char [length-2];
+    buffer = new char [length];
     
-    is.getline(header,80);
-    is.getline(header,80);
+    // is.getline(header,80);
+    // is.getline(header,80);
     
     // read data as a block:
     is.read (buffer,length);
@@ -2489,9 +2488,6 @@ void Aligner::setFinalClusters(string mumFileName)
     string data(buffer);
     int pos = 0;
     int oldpos = 0;
-    int mpos = 0;
-    int oldmpos = 0;
-    long start = 0;
     pos = data.find("\n",0);
     
     while( pos != int(string::npos) )
@@ -2499,40 +2495,29 @@ void Aligner::setFinalClusters(string mumFileName)
         string tempmum( data.substr(oldpos , pos-oldpos ));
         oldpos = pos+1;
         pos = data.find("\n",pos+1);
-        rawmums.push_back(tempmum);
-        
-    }
 
-    for( int i = 0; i < int(rawmums.size()); i++)
-    {
-        string tempmum;
-        if ( i % (this->n + 1) )// i % 3
-        {
-            continue;
-        }
-        tempmum = rawmums.at(i);
-        mpos = tempmum.find("  ",0);
-        oldmpos = 0;
-        
-        while( mpos != int(string::npos) )
-        {            
-            string mstart = tempmum.substr( oldmpos, mpos-oldmpos );
-            start = atol(mstart.c_str());
-            startpos.push_back( start );
-            oldmpos = mpos+1;
-            mpos = tempmum.find("  ",mpos+1);
-            
+        std::istringstream(tempmum) >> mumlength;
+        // Parse the start pos
+        std::string temp;
+        std::getline(std::istringstream(tempmum) >> std::ws, temp, '\t'); 
+        std::istringstream(temp) >> std::ws;
+        while (std::getline(std::istringstream(temp) >> std::ws, temp, ',')) {
+            startpos.push_back(std::stoi(temp));
         }
 
-        mpos = tempmum.find(" ",oldmpos+1);
-        string mlength = tempmum.substr( oldmpos, mpos-oldmpos );
-        mumlength = atol(mlength.c_str());
-        TMum mum(startpos,mumlength);
+        // Parse the strand
+        std::vector<int> strand;
+        std::getline(std::istringstream(tempmum) >> std::ws, temp, '\t');  // Skip the first tab
+        while (std::getline(std::istringstream(temp) >> std::ws, temp, ',')) {
+            strand.push_back(temp[0] == '+' ? 1 : 0);
+        }
+        bool ok = 1;
+        TMum mum(startpos,mumlength,strand,this->genomes,ok);
+        // TMum mum(startpos,mumlength, strand);
         mum.slength = 10000;
         mums.push_back(mum);
         startpos.clear();
         mumlength = 0;
-
     }
     
     is.close();
