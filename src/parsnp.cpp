@@ -2470,11 +2470,12 @@ void Aligner::setFinalClusters(string mumFileName)
     char header[80];
     int length;
     char * buffer ;
-
+    cerr << "hi" << endl;
     ifstream is(mumFileName.c_str());
     is.seekg (0, ios::end);
     length = is.tellg();
     is.seekg (0, ios::beg);
+    cerr << "hi" << endl;
 
     // allocate memory:
     buffer = new char [length];
@@ -2497,6 +2498,7 @@ void Aligner::setFinalClusters(string mumFileName)
         pos = data.find("\n",pos+1);
 
         std::istringstream(tempmum) >> mumlength;
+        cerr << mumlength << endl;
         // Parse the start pos
         std::string temp;
         std::getline(std::istringstream(tempmum) >> std::ws, temp, '\t'); 
