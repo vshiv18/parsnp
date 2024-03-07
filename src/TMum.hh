@@ -32,6 +32,7 @@ public:
   long getid(void);
   void trimleft();
   void trimright();
+  void serialize(FILE* outfile) const;
   ~TMum();
 
   friend int operator<(const TMum &m1, const TMum &m2);

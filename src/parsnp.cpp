@@ -545,7 +545,11 @@ void Aligner::writeOutput(string psnp,vector<float>& coveragerow)
     
     string logfile = prefix+ psnp + ".log";
     ofstream log ( logfile.c_str());
+    if (!log.is_open()) {
+        std::cerr << "Error opening the file." << std::endl;
+    }
     
+    cerr << "Opened log files" << endl;
     //determine the largest file
     long largest = 0;
     long cur = 0;
@@ -595,12 +599,13 @@ void Aligner::writeOutput(string psnp,vector<float>& coveragerow)
         }
     }
     xmfafile << "#IntervalCount " << total_clusters << endl;
-    
-    string mumfile2 = "allmums.out";
-    ofstream mumfile(mumfile2.c_str());
+    cerr << "wrote xmfa headers" << endl;
+    // string mumfile2 = "allmums.out";
+    // ofstream mumfile(mumfile2.c_str());
     std::vector< vector<string> > tempalign2(allclusters.size(),std::vector<string>(nnum));//[allclusters.size()][nnum];
     int numt = this->cores;
     int z = 0;
+    cerr << "Clusters: " << allclusters.size() << endl;
 #pragma omp parallel num_threads(numt)
     {
 #pragma omp for schedule(dynamic)
@@ -641,7 +646,7 @@ void Aligner::writeOutput(string psnp,vector<float>& coveragerow)
                 continue;
         }
     }
-    
+    cerr << "Running muscle now" << endl;
 #pragma omp parallel num_threads(numt) shared(tempalign2) private(pfilenum,b)
     {
 #pragma omp for schedule(dynamic)//(static, 1)
@@ -848,7 +853,7 @@ void Aligner::writeOutput(string psnp,vector<float>& coveragerow)
                                 }
                                 if (ok)
                                 {
-                                    
+                                    // cerr << "actually aligning" << endl;
                                     bool align_success = false;
                                     MuscleInterface gmi = MuscleInterface();
                                     align_success = gmi.CallMuscleFast(alignment_result,seq2aln);
@@ -1073,7 +1078,7 @@ void Aligner::writeOutput(string psnp,vector<float>& coveragerow)
         else
             continue;
     }
-    
+    cerr << "Finished muscle-ing" << endl;
     
     float percent;
     //cout << this->aligned <<   " " << this->genomes.at(0).size() << endl;
@@ -1573,7 +1578,7 @@ void Aligner::setMums1(TRegion r1, vector<TMum>& mums, bool anchors = true, bool
         time ( &end);
         dif = difftime(end,start);
         if(anchors)
-            printf("                 compressed suffix graph construction elapsed time: %.0lf seconds\n\n",dif);
+            cerr << "                 Compressed suffix graph construction elapsed time: " << dif << " seconds\n\n";
 
         Master   = new UM[rs[0].len_region];
         MasterRC   = new UM[rs[0].len_region];
@@ -1844,7 +1849,7 @@ void Aligner::setMums1(TRegion r1, vector<TMum>& mums, bool anchors = true, bool
         time ( &end);
         dif = difftime(end,start);
         if(anchors)
-            printf("                 MUM anchor search elapsed time: %.0lf seconds\n\n",dif);
+            cerr << "                 MUM anchor search elapsed time: "<< dif << " seconds\n\n";
         free_CSG(csg);
         
     }
@@ -1953,7 +1958,7 @@ void Aligner::setMumi(TRegion r1, vector<TMum>& mums, bool anchors = true, bool 
         time ( &end);
         dif = difftime(end,start);
         if(anchors)
-            printf("                 Compressed suffix graph construction elapsed time: %.0lf seconds\n\n",dif);
+            cerr << "                 Compressed suffix graph construction elapsed time: " << dif << " seconds\n\n";
         
         time ( &start);
         if(anchors)
@@ -2098,7 +2103,7 @@ void Aligner::setMumi(TRegion r1, vector<TMum>& mums, bool anchors = true, bool 
         time ( &end);
         dif = difftime(end,start);
         if(anchors)
-            printf("                 MUMi pairwise distance calculation finished: %.0lf seconds\n\n",dif);
+            cerr << "                 MUMi pairwise distance calculation finished: " << dif << " seconds\n\n";
             
     }
     
@@ -2182,102 +2187,102 @@ bool Aligner::setInitialClusters( string anchorFileName )
 {
     
     vector<TMum> mums;
-    vector<string> rawmums;
     vector<long> startpos;
     long mumlength;
-    char header[80];
     int length;
-    char * buffer ;
-    int i = 0;
-    
-    //parse anchorFile
+    string tempmum;
+    // char * buffer ;
     ifstream is(anchorFileName.c_str());
-    is.seekg (0, ios::end);
-    length = is.tellg();
-    is.seekg (0, ios::beg);
-    
-    // get length of file:
+    if (!is.is_open()) {
+        std::cerr << "Error opening the file." << std::endl;
+    }
+    // is.seekg (0, ios::end);
+    // length = is.tellg();
+    // is.seekg (0, ios::beg);
+
     // allocate memory:
-    buffer = new char [length-2];
+    // buffer = new char [length];
     
-    is.getline(header,80);
-    is.getline(header,80);
+    // is.getline(header,80);
+    // is.getline(header,80);
+    
     // read data as a block:
-    is.read (buffer,length);
+    // is.read (buffer,length);
     
-    string data(buffer);
+    // string data(buffer);
+
     int pos = 0;
     int oldpos = 0;
-    int mpos = 0;
-    int oldmpos = 0;
-    long start = 0;
-    pos = data.find("\n",0);
-    while( pos != int(string::npos) )
-    {
-        string tempmum( data.substr(oldpos , pos-oldpos ));
-        oldpos = pos+1;
-        pos = data.find("\n",pos+1);
-        rawmums.push_back(tempmum);
-        
-    }
+    cerr << "parsing mums: " << anchorFileName<< endl;
+    string temp;
+    while (getline(is, tempmum))
+    {   
+        std::istringstream row(tempmum);
+        getline(row, temp, '\t');
+        mumlength = std::stoi(temp);
+        // row >> mumlength;
+        // Parse the start pos
+        // std::istringstream(tempmum) >> tempmum;
+        std::getline(row, temp, '\t'); 
+        std::istringstream starts(temp);
+        // std::istringstream(temp) >> std::ws;
+        while (std::getline(starts, temp, ',')) {
+            // cerr << temp<< endl;
+            startpos.push_back(std::stoi(temp));
+        }
 
-    for( ssize i = 0; i < rawmums.size(); i++)
+        // Parse the strand
+        std::vector<int> strand;
+        std::getline(row, temp, '\t'); 
+        std::istringstream strands(temp);
+         while (std::getline(strands, temp, ',')) {
+            // cerr << temp<< endl;
+            strand.push_back(temp[0] == '+' ? 1 : 0);
+        }
+        bool ok = 1;
+        TMum mum(startpos,mumlength,strand,this->genomes,ok);
+        // TMum mum(startpos,mumlength, strand);
+        mum.slength = 10000;
+        if (ok)
+            mums.push_back(mum);
+        startpos.clear();
+        mumlength = 0;
+    }
+    cerr << "parsed mums: " << mums.size() << endl;
+    is.close();
+    for(auto i =0; i < mums.size();i++)
     {
-        string tempmum;
-        if ( i % (this->n + 1) )// i % 3
+        if ( mums[i].length < 2 || mums[i].start.size() <= 1)
         {
             continue;
         }
-        tempmum = rawmums.at(i);
-        mpos = tempmum.find("  ",0);
-        oldmpos = 0;
-        
-        while( mpos != int(string::npos) )
-        {
-            string mstart = tempmum.substr( oldmpos, mpos-oldmpos );
-            start = atol(mstart.c_str());
-            if( ! start )
-            {
-                start = 0;
-            }
-            startpos.push_back( start );
-            oldmpos = mpos+1;
-            mpos = tempmum.find("  ",mpos+1);
-            
+        else if (mums[i].start.size() != this->n || mums[i].end.size() != this->n){
+            continue;
+            // cerr << "misformed mum: length: " << mums[i].length << "\tref pos: "<< mums[i].start[0] << "\tstarts: " << mums[i].start.size() << "\tends: " << mums[i].end.size() << "\tstrand: " << mums[i].isforward.size() <<  endl;
         }
-        
-        mpos = tempmum.find(" ",oldmpos+1);
-        string mlength = tempmum.substr( oldmpos, mpos-oldmpos );
-        mumlength = atol(mlength.c_str());
-        TMum mum(startpos,mumlength);
-        mum.slength = 10000;
-        mums.push_back(mum);
-        startpos.clear();
-        mumlength = 0;
-
-    }
-    
-    is.close();
-    
-    for(int i =0; i < int(mums.size());i++)
-    {
+        trim(mums[i]);
         for ( ssize k = 0; k < this->n; k++)
         {
-            for ( int m = mums.at(i).start[k]; m < mums.at(i).end[k]; m++)
-                this->mumlayout[k][m] =1;//+= 1;
+            // auto end = mums[i].end[k] > genomes.at(k).size() ? genomes.at(k).size() : mums[i].end[k];
+            if (mums[i].end[k] > genomes.at(k).size()){
+                cerr << "mum overflow: " << mums[i].length << endl;
+                continue;
+            }
+            for ( int m = mums[i].start[k]; m < mums.at(i).end[k]; m++)
+                this->mumlayout[k][m] = 1;
         }
         this->anchors.push_back(mums.at(i));
         this->mums.push_back(mums.at(i));
         Cluster cluster(mums.at(i));
         this->clusters.push_back(cluster);
     }
-    
+    cerr << "added to cluster" << endl;
     this->m0 = int(mums.size());
     
     TRegion lRegion;
     TRegion rRegion;
     
-    for ( i = 0; i < int(this->clusters.size()); i ++ )
+    for (auto i = 0; i < int(this->clusters.size()); i ++ )
     {
         lRegion = this->determineRegion(this->clusters.at(i), 1 );
         if ( lRegion.slength > this->q && i == 0 )
@@ -2297,6 +2302,7 @@ bool Aligner::setInitialClusters( string anchorFileName )
             this->r110.push_back(rRegion);
         }
     }
+    cerr << "split regions" << endl;
     
     return this->m0;
 }
@@ -2467,67 +2473,73 @@ void Aligner::setFinalClusters(string mumFileName)
     vector<TMum> mums;
     vector<long> startpos;
     long mumlength;
-    char header[80];
     int length;
-    char * buffer ;
-    cerr << "hi" << endl;
+    string tempmum;
+    // char * buffer ;
     ifstream is(mumFileName.c_str());
-    is.seekg (0, ios::end);
-    length = is.tellg();
-    is.seekg (0, ios::beg);
-    cerr << "hi" << endl;
+    if (!is.is_open()) {
+        std::cerr << "Error opening the file." << std::endl;
+    }
+    // is.seekg (0, ios::end);
+    // length = is.tellg();
+    // is.seekg (0, ios::beg);
 
     // allocate memory:
-    buffer = new char [length];
+    // buffer = new char [length];
     
     // is.getline(header,80);
     // is.getline(header,80);
     
     // read data as a block:
-    is.read (buffer,length);
+    // is.read (buffer,length);
     
-    string data(buffer);
+    // string data(buffer);
+
     int pos = 0;
     int oldpos = 0;
-    pos = data.find("\n",0);
-    
-    while( pos != int(string::npos) )
-    {
-        string tempmum( data.substr(oldpos , pos-oldpos ));
-        oldpos = pos+1;
-        pos = data.find("\n",pos+1);
-
-        std::istringstream(tempmum) >> mumlength;
-        cerr << mumlength << endl;
+    string temp;
+    cerr << "parsing mums: " << mumFileName<< endl;
+    while (getline(is, tempmum))
+    {   
+        std::istringstream row(tempmum);
+        getline(row, temp, '\t');
+        mumlength = std::stoi(temp);
+        // row >> mumlength;
         // Parse the start pos
-        std::string temp;
-        std::getline(std::istringstream(tempmum) >> std::ws, temp, '\t'); 
-        std::istringstream(temp) >> std::ws;
-        while (std::getline(std::istringstream(temp) >> std::ws, temp, ',')) {
+        // std::istringstream(tempmum) >> tempmum;
+        std::getline(row, temp, '\t'); 
+        std::istringstream starts(temp);
+        // std::istringstream(temp) >> std::ws;
+        while (std::getline(starts, temp, ',')) {
+            // cerr << temp<< endl;
             startpos.push_back(std::stoi(temp));
         }
 
         // Parse the strand
         std::vector<int> strand;
-        std::getline(std::istringstream(tempmum) >> std::ws, temp, '\t');  // Skip the first tab
-        while (std::getline(std::istringstream(temp) >> std::ws, temp, ',')) {
+        std::getline(row, temp, '\t'); 
+        std::istringstream strands(temp);
+         while (std::getline(strands, temp, ',')) {
+            // cerr << temp<< endl;
             strand.push_back(temp[0] == '+' ? 1 : 0);
         }
         bool ok = 1;
         TMum mum(startpos,mumlength,strand,this->genomes,ok);
         // TMum mum(startpos,mumlength, strand);
         mum.slength = 10000;
-        mums.push_back(mum);
+        if (ok)
+            mums.push_back(mum);
         startpos.clear();
         mumlength = 0;
     }
-    
+    cerr << "parsed mums: " << mums.size() << endl;
     is.close();
     for(int i =0; i < int(mums.size());i++)
     {
         for ( ssize k = 0; k < this->n; k++)
-        {
-            for ( int m = mums.at(i).start[k]; m < mums.at(i).end[k]; m++)
+        {   
+            auto end = mums.at(i).end[k] > genomes.at(k).size() ? genomes.at(k).size() : mums.at(i).end[k];
+            for ( int m = mums.at(i).start[k]; m < end; m++)
                 this->mumlayout[k][m] = 1;
         }
         this->anchors.push_back(mums.at(i));
@@ -2535,7 +2547,7 @@ void Aligner::setFinalClusters(string mumFileName)
         Cluster cluster(mums.at(i));
         this->clusters.push_back(cluster);
     }
-    
+    cerr << "added clusters" << endl;
     this->m0 = int(mums.size());
     this->setFinalClusters();
 }
@@ -2888,6 +2900,8 @@ int main ( int argc, char* argv[] )
     bool harsh=false;
     vector<string> allfiles;
     
+    // mumfile = "/vast/blangme2/vshiv/parsnp/pos_ref.txt";
+
     string mumatom;
     
     string fname;
@@ -3193,6 +3207,7 @@ int main ( int argc, char* argv[] )
     time ( &end );
     
     dif = difftime (end,start);
+    printf("        Finished anchor search, elapsed time: %.0lf seconds\n\n", dif );
     align.anchorTime = dif;    
     time ( &start);
     if ( ! anchorsOnly && ! mumfile.size() && ! shustring)
@@ -3219,6 +3234,22 @@ int main ( int argc, char* argv[] )
     printf("        Finished recursive MUM search, elapsed time: %.0lf seconds\n\n", dif );
     align.coarsenTime = dif;
     
+    // Edit to extract MUMs
+    // VSS 11/9/23
+    string anchor_output = outdir + "/anchors.txt";
+    FILE* anchor_outfile = fopen(anchor_output.c_str(), "w");
+    fprintf(anchor_outfile, "id\tlength\tstart_pos\tend_pos\tstrand\n");
+    for (const auto& anchor : align.anchors) {
+             anchor.serialize(anchor_outfile);
+        }
+    string mum_output = outdir + "/mums.txt";
+    FILE* mum_outfile = fopen(mum_output.c_str(), "w");
+    fprintf(mum_outfile, "id\tlength\tstart_pos\tend_pos\tstrand\n");
+    for (const auto& mum : align.mums) {
+             mum.serialize(mum_outfile);
+        }
+
+
     if ( random && ! mumfile.size() )
     {
         cerr << "Filtering spurious matches..." << endl;
@@ -3238,16 +3269,19 @@ int main ( int argc, char* argv[] )
     
     cerr << "Creating and verifying final LCBs..." << endl;
     if( mumfile.size())
+    {
         align.setFinalClusters(mumfile);
+        align.filterRandom1(align.random);
+    }
     else
         align.setFinalClusters();
     
     align.filterRandomClustersSimple1();
     
-    if( mumfile.size())
-        align.setFinalClusters(mumfile);
-    else
-        align.setFinalClusters();
+    // if( mumfile.size())
+    //     align.setFinalClusters(mumfile);
+    // else
+    //     align.setFinalClusters();
 
     align.setInterClusterRegions();
     time ( &end);
